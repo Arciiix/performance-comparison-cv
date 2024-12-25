@@ -1,126 +1,133 @@
+import sys
+import time
 import psutil
 import subprocess
-import time
-import matplotlib.pyplot as plt
 import threading
-import queue
-import argparse
 
 
-# Function to monitor resources
-def monitor_resources(proc, q):
-    cpu_usage = []
-    memory_usage = []
-    timestamps = []
-    stdout_values = []
+import matplotlib.pyplot as plt
 
-    def read_stdout():
-        """Reads the process's stdout and stores values."""
-        while True:
+dot_count = 0
+
+
+def read_stream(stream, name):
+    global dot_count
+    print(f"Debug: Starting thread to read {name}")
+    while True:
+        chunk = stream.read(1)  # Read character-by-character
+        if not chunk:
+            print(f"Debug: {name} stream ended")
+            break
+        text = chunk.decode("utf-8")
+        sys.stdout.write(text)
+        sys.stdout.flush()
+        if text == ".":
+            dot_count += 1
+
+
+def measure_usage(proc):
+    print("Debug: Gathering CPU and memory usage")
+    total_cpu = 0.0
+    total_mem = 0.0
+    procs = [proc] + proc.children(recursive=True)
+    for p in procs:
+        if p.is_running():
             try:
-                line = proc.stdout.readline()
-                if line == b"" and proc.poll() is not None:
-                    break
-                if line:
-                    try:
-                        value = float(line.decode().strip())
-                        stdout_values.append((time.time() - start_time, value))
-                    except ValueError:
-                        pass
-            except Exception:
-                break
-
-    start_time = time.time()
-    stdout_thread = threading.Thread(target=read_stdout)
-    stdout_thread.daemon = True
-    stdout_thread.start()
-
-    try:
-        while proc.poll() is None:
-            try:
-                process = psutil.Process(proc.pid)
-                with process.oneshot():
-                    cpu = process.cpu_percent(interval=0.1)
-                    memory = process.memory_info().rss / (1024 * 1024)  # Convert to MB
-                    timestamp = time.time() - start_time
-
-                    # Collect data
-                    cpu_usage.append((timestamp, cpu))
-                    memory_usage.append((timestamp, memory))
-                    timestamps.append(timestamp)
-
-                time.sleep(0.5)  # Poll every 0.5 seconds
+                total_cpu += p.cpu_percent(interval=None)
+                total_mem += p.memory_info().rss
             except psutil.NoSuchProcess:
-                break
-
-        stdout_thread.join()
-    except KeyboardInterrupt:
-        proc.terminate()
-    finally:
-        q.put((cpu_usage, memory_usage, stdout_values))
+                pass
+    return total_cpu, total_mem / (1024 * 1024)  # Convert to MB
 
 
-# Function to plot results
-def plot_results(cpu_usage, memory_usage, stdout_values):
-    fig, axs = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
-
-    # Plot CPU usage
-    if cpu_usage:
-        cpu_timestamps, cpu_values = zip(*cpu_usage)
-        axs[0].plot(cpu_timestamps, cpu_values, label="CPU Usage (%)", color="blue")
-        axs[0].set_ylabel("CPU Usage (%)")
-        axs[0].legend()
-        axs[0].grid(True)
-
-    # Plot memory usage
-    if memory_usage:
-        mem_timestamps, mem_values = zip(*memory_usage)
-        axs[1].plot(
-            mem_timestamps, mem_values, label="Memory Usage (MB)", color="green"
-        )
-        axs[1].set_ylabel("Memory Usage (MB)")
-        axs[1].legend()
-        axs[1].grid(True)
-
-    # Plot stdout values
-    if stdout_values:
-        out_timestamps, out_values = zip(*stdout_values)
-        axs[2].plot(out_timestamps, out_values, label="Stdout Values", color="red")
-        axs[2].set_ylabel("Output Value")
-        axs[2].legend()
-        axs[2].grid(True)
-
-    axs[2].set_xlabel("Time (s)")
-    plt.tight_layout()
-    plt.show()
-
-
-# Main function
 def main():
-    parser = argparse.ArgumentParser(
-        description="Monitor and plot resource usage of a process."
-    )
-    parser.add_argument("command", nargs="+", help="The command to run.")
-    args = parser.parse_args()
+    if len(sys.argv) < 2:
+        print("Usage: python measure.py <command> [args...]")
+        sys.exit(1)
+    command = sys.argv[1:]
+    print(f"Debug: Command to run is {command}")
 
-    # Start the process
-    with subprocess.Popen(
-        args.command,
+    print("Debug: Spawning subprocess")
+    process = subprocess.Popen(
+        command,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        bufsize=1,
         universal_newlines=False,
-    ) as proc:
-        q = queue.Queue()
-        monitor_thread = threading.Thread(target=monitor_resources, args=(proc, q))
-        monitor_thread.start()
-        monitor_thread.join()
+        bufsize=0,
+    )
 
-        # Retrieve collected data
-        cpu_usage, memory_usage, stdout_values = q.get()
+    # Threads to read stdout and stderr
+    out_thread = threading.Thread(
+        target=read_stream, args=(process.stdout, "stdout"), daemon=True
+    )
+    err_thread = threading.Thread(
+        target=read_stream, args=(process.stderr, "stderr"), daemon=True
+    )
+    out_thread.start()
+    err_thread.start()
 
-    # Plot results
-    plot_results(cpu_usage, memory_usage, stdout_values)
+    ps_proc = psutil.Process(process.pid)
+    print("Debug: Created psutil.Process")
+
+    cpu_data = []
+    mem_data = []
+    fps_data = []
+    time_data = []
+
+    prev_dot_count = 0
+    start_time = time.time()
+
+    while True:
+        # Wait a bit before measuring
+        time.sleep(1.0)
+        now = time.time() - start_time
+
+        # Measure CPU and memory usage
+        cpu_usage, mem_usage = measure_usage(ps_proc)
+        cpu_data.append(cpu_usage)
+        mem_data.append(mem_usage)
+
+        # Calculate FPS (dots/second) in last interval
+        global dot_count
+        dots_in_this_interval = dot_count - prev_dot_count
+        prev_dot_count = dot_count
+        fps = dots_in_this_interval / 1.0
+        fps_data.append(fps)
+        time_data.append(now)
+
+        print(
+            f"Debug: Time={now:.1f}s CPU={cpu_usage:.2f}% Mem={mem_usage:.2f}MB FPS={fps:.2f}"
+        )
+
+        if process.poll() is not None:
+            print("Debug: Subprocess finished, breaking loop.")
+            break
+
+    # Join threads to ensure we read remaining output
+    out_thread.join()
+    err_thread.join()
+
+    print("Debug: Plotting results")
+    fig, axs = plt.subplots(3, 1, figsize=(8, 8))
+
+    axs[0].plot(time_data, cpu_data, label="CPU %")
+    axs[0].set_ylabel("CPU (%)")
+    axs[0].legend()
+    axs[0].grid(True)
+
+    axs[1].plot(time_data, mem_data, label="Memory (MB)", color="orange")
+    axs[1].set_ylabel("Mem (MB)")
+    axs[1].legend()
+    axs[1].grid(True)
+
+    axs[2].plot(time_data, fps_data, label="FPS", color="green")
+    axs[2].set_ylabel("FPS")
+    axs[2].set_xlabel("Time (s)")
+    axs[2].legend()
+    axs[2].grid(True)
+
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == "__main__":

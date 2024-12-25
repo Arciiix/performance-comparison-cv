@@ -13,6 +13,8 @@ std::string streamUrl = "http://192.168.0.251:8080/video";
 
 int main(int arg, char* argv[])
 {
+    std::cout << "Hello" << std::endl;
+
     GstElement* pipeline = nullptr;
     GstElement* sink = nullptr;
     GstBus* bus = nullptr;
@@ -101,6 +103,7 @@ int main(int arg, char* argv[])
 
         // For measuring FPS
         std::cout << ".";
+        std::cout.flush();
     }
   
     
