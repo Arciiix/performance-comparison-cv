@@ -8,10 +8,9 @@
 #include <gst/gst.h>
 #include <gst/app/gstappsink.h>
 
-std::string streamUrl = "http://192.168.0.251:8080/video";
 bool shouldExit = false;
 
-int loop(const char* id, bool withFaceDetection) {
+int loop(const std::string& streamUrl, const char* id, bool withFaceDetection) {
     std::cout << "Hello" << std::endl;
 
     std::string streamId = std::string(id);
@@ -146,9 +145,16 @@ int loop(const char* id, bool withFaceDetection) {
 int main(int arg, char* argv[])
 {
     std::cout << "Hello main" << std::endl;
-    
-    std::thread t1(loop, ".", true);
-    std::thread t2(loop, ",", false);
+
+    if (arg < 2) {
+		std::cerr << "Usage: " << argv[0] << " <streamUrl>" << std::endl;
+		return -1;
+	}
+
+    std::string streamUrl = argv[1];
+
+    std::thread t1(loop, streamUrl, ".", true);
+    std::thread t2(loop, streamUrl, ",", false);
 
     t1.join();
     t2.join();
