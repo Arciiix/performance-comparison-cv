@@ -21,6 +21,13 @@ int main(int arg, char* argv[])
     GstMessage* msg = nullptr;
     GMainLoop* loop = nullptr;
 
+    cv::CascadeClassifier faceCascade;
+
+    if (!faceCascade.load("haarcascade_frontalface_default.xml")) {
+        std::cerr << "Error loading Haar Cascade XML file!" << std::endl;
+        return -1;
+    }
+
     gst_init(&arg, &argv);
 
     std::string pipelineDesc =
@@ -51,6 +58,7 @@ int main(int arg, char* argv[])
     gst_app_sink_set_emit_signals(GST_APP_SINK(sink), false);
     gst_app_sink_set_drop(GST_APP_SINK(sink), true);
     gst_app_sink_set_max_buffers(GST_APP_SINK(sink), 1);
+
 
     gst_element_set_state(pipeline, GST_STATE_PLAYING);
 
@@ -89,6 +97,22 @@ int main(int arg, char* argv[])
         // Convert YUV to RGB using OpenCV (this will be displayed)
         cv::Mat rgb_image;
         cv::cvtColor(yuv_image, rgb_image, cv::COLOR_YUV2BGR_I420);
+
+        cv::Mat gray_frame;
+        cv::cvtColor(rgb_image, gray_frame, cv::COLOR_BGR2GRAY);
+        cv::resize(gray_frame, gray_frame, cv::Size(640, 480));
+        cv::equalizeHist(gray_frame, gray_frame);
+
+        std::vector<cv::Rect> faces;
+        // Detect faces
+        faceCascade.detectMultiScale(gray_frame, faces, 1.1, 3, 0, cv::Size(30, 30));
+
+        // Draw rectangles around detected faces
+        for (const auto& face : faces) {
+            // Recalculate the face rectangle to the original frame size
+            cv::Rect resizedFace(face.x * width / 640, face.y * height / 480, face.width * width / 640, face.height * height / 480);
+            cv::rectangle(rgb_image, resizedFace, cv::Scalar(0, 255, 0), 2);
+        }
 
         // Display the frame in OpenCV window
         cv::imshow("Stream", rgb_image);

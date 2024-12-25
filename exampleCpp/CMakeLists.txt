@@ -36,6 +36,12 @@ if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET exampleCpp PROPERTY CXX_STANDARD 20)
 endif()
 
+add_custom_command(
+        TARGET exampleCpp POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_SOURCE_DIR}/haarcascade_frontalface_default.xml
+                ${CMAKE_CURRENT_BINARY_DIR}/haarcascade_frontalface_default.xml)
+
 # TODO: Add tests and install targets if needed.
 target_link_libraries(exampleCpp PRIVATE 
 	${OpenCV_LIBS}
