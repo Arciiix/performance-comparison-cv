@@ -9,11 +9,12 @@
 #include <gst/app/gstappsink.h>
 
 std::string streamUrl = "http://192.168.0.251:8080/video";
+bool shouldExit = false;
 
-
-int main(int arg, char* argv[])
-{
+int loop(const char* id, bool withFaceDetection) {
     std::cout << "Hello" << std::endl;
+
+    std::string streamId = std::string(id);
 
     GstElement* pipeline = nullptr;
     GstElement* sink = nullptr;
@@ -23,12 +24,12 @@ int main(int arg, char* argv[])
 
     cv::CascadeClassifier faceCascade;
 
-    if (!faceCascade.load("haarcascade_frontalface_default.xml")) {
+    if (withFaceDetection && !faceCascade.load("haarcascade_frontalface_default.xml")) {
         std::cerr << "Error loading Haar Cascade XML file!" << std::endl;
         return -1;
     }
 
-    gst_init(&arg, &argv);
+    gst_init(0, nullptr);
 
     std::string pipelineDesc =
         "souphttpsrc location=" + streamUrl + " ! jpegdec ! videoconvert ! appsink name=sink";
@@ -37,10 +38,10 @@ int main(int arg, char* argv[])
     pipeline = gst_parse_launch(pipelineDesc.c_str(), &pipelineError);
 
     if (pipelineError) {
-		std::cerr << "Failed to create the pipline: " << pipelineError->message << std::endl;
-		g_error_free(pipelineError);
-		return -1;
-	}
+        std::cerr << "Failed to create the pipline: " << pipelineError->message << std::endl;
+        g_error_free(pipelineError);
+        return -1;
+    }
 
     if (!pipeline) {
         std::cerr << "Failed to create the pipline";
@@ -65,6 +66,9 @@ int main(int arg, char* argv[])
     std::cout << "Start" << std::endl;
 
     while (true) {
+        if (shouldExit) {
+			break;
+		}
         GstSample* sample = gst_app_sink_pull_sample(GST_APP_SINK(sink));
         if (!sample) {
             std::cerr << "Failed to pull sample. Exiting loop." << std::endl;
@@ -98,26 +102,29 @@ int main(int arg, char* argv[])
         cv::Mat rgb_image;
         cv::cvtColor(yuv_image, rgb_image, cv::COLOR_YUV2BGR_I420);
 
-        cv::Mat gray_frame;
-        cv::cvtColor(rgb_image, gray_frame, cv::COLOR_BGR2GRAY);
-        cv::resize(gray_frame, gray_frame, cv::Size(640, 480));
-        cv::equalizeHist(gray_frame, gray_frame);
+        if (withFaceDetection) {
+            cv::Mat gray_frame;
+            cv::cvtColor(rgb_image, gray_frame, cv::COLOR_BGR2GRAY);
+            cv::resize(gray_frame, gray_frame, cv::Size(640, 480));
+            cv::equalizeHist(gray_frame, gray_frame);
 
-        std::vector<cv::Rect> faces;
-        // Detect faces
-        faceCascade.detectMultiScale(gray_frame, faces, 1.1, 3, 0, cv::Size(30, 30));
+            std::vector<cv::Rect> faces;
+            // Detect faces
+            faceCascade.detectMultiScale(gray_frame, faces, 1.1, 3, 0, cv::Size(30, 30));
 
-        // Draw rectangles around detected faces
-        for (const auto& face : faces) {
-            // Recalculate the face rectangle to the original frame size
-            cv::Rect resizedFace(face.x * width / 640, face.y * height / 480, face.width * width / 640, face.height * height / 480);
-            cv::rectangle(rgb_image, resizedFace, cv::Scalar(0, 255, 0), 2);
+            // Draw rectangles around detected faces
+            for (const auto& face : faces) {
+                // Recalculate the face rectangle to the original frame size
+                cv::Rect resizedFace(face.x * width / 640, face.y * height / 480, face.width * width / 640, face.height * height / 480);
+                cv::rectangle(rgb_image, resizedFace, cv::Scalar(0, 255, 0), 2);
+            }
         }
 
         // Display the frame in OpenCV window
-        cv::imshow("Stream", rgb_image);
+        cv::imshow("Stream " + streamId, rgb_image);
 
         if (cv::waitKey(1) == 27) { // Exit on 'Esc'
+            shouldExit = true;
             break;
         }
 
@@ -126,16 +133,29 @@ int main(int arg, char* argv[])
         gst_sample_unref(sample);
 
         // For measuring FPS
-        std::cout << ".";
+        std::cout << streamId;
         std::cout.flush();
     }
-  
+
+    std::cout << "End" << std::endl;
+
+    gst_element_set_state(pipeline, GST_STATE_NULL);
+    gst_object_unref(pipeline);
+}
+
+int main(int arg, char* argv[])
+{
+    std::cout << "Hello main" << std::endl;
     
+    std::thread t1(loop, ".", true);
+    std::thread t2(loop, ",", false);
+
+    t1.join();
+    t2.join();
+
     // Clean up
     cv::destroyAllWindows();
     cv::waitKey(1);
-    gst_element_set_state(pipeline, GST_STATE_NULL);
-    gst_object_unref(pipeline);
 
     return 0;
 }
