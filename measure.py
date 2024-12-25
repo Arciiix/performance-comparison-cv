@@ -3,15 +3,14 @@ import time
 import psutil
 import subprocess
 import threading
-
-
 import matplotlib.pyplot as plt
 
 dot_count = 0
+comma_count = 0
 
 
 def read_stream(stream, name):
-    global dot_count
+    global dot_count, comma_count
     print(f"Debug: Starting thread to read {name}")
     while True:
         chunk = stream.read(1)  # Read character-by-character
@@ -23,6 +22,8 @@ def read_stream(stream, name):
         sys.stdout.flush()
         if text == ".":
             dot_count += 1
+        elif text == ",":
+            comma_count += 1
 
 
 def measure_usage(proc):
@@ -71,10 +72,12 @@ def main():
 
     cpu_data = []
     mem_data = []
-    fps_data = []
+    dot_fps_data = []
+    comma_fps_data = []
     time_data = []
 
     prev_dot_count = 0
+    prev_comma_count = 0
     start_time = time.time()
 
     while True:
@@ -88,15 +91,19 @@ def main():
         mem_data.append(mem_usage)
 
         # Calculate FPS (dots/second) in last interval
-        global dot_count
+        global dot_count, comma_count
         dots_in_this_interval = dot_count - prev_dot_count
+        commas_in_this_interval = comma_count - prev_comma_count
         prev_dot_count = dot_count
-        fps = dots_in_this_interval / 1.0
-        fps_data.append(fps)
+        prev_comma_count = comma_count
+        dot_fps = dots_in_this_interval / 1.0
+        comma_fps = commas_in_this_interval / 1.0
+        dot_fps_data.append(dot_fps)
+        comma_fps_data.append(comma_fps)
         time_data.append(now)
 
         print(
-            f"Debug: Time={now:.1f}s CPU={cpu_usage:.2f}% Mem={mem_usage:.2f}MB FPS={fps:.2f}"
+            f"Debug: Time={now:.1f}s CPU={cpu_usage:.2f}% Mem={mem_usage:.2f}MB Dot FPS={dot_fps:.2f} Comma FPS={comma_fps:.2f}"
         )
 
         if process.poll() is not None:
@@ -108,7 +115,7 @@ def main():
     err_thread.join()
 
     print("Debug: Plotting results")
-    fig, axs = plt.subplots(3, 1, figsize=(8, 8))
+    fig, axs = plt.subplots(4, 1, figsize=(8, 10))
 
     axs[0].plot(time_data, cpu_data, label="CPU %")
     axs[0].set_ylabel("CPU (%)")
@@ -120,11 +127,16 @@ def main():
     axs[1].legend()
     axs[1].grid(True)
 
-    axs[2].plot(time_data, fps_data, label="FPS", color="green")
-    axs[2].set_ylabel("FPS")
-    axs[2].set_xlabel("Time (s)")
+    axs[2].plot(time_data, dot_fps_data, label="Dot FPS", color="green")
+    axs[2].set_ylabel("Dot FPS")
     axs[2].legend()
     axs[2].grid(True)
+
+    axs[3].plot(time_data, comma_fps_data, label="Comma FPS", color="blue")
+    axs[3].set_ylabel("Comma FPS")
+    axs[3].set_xlabel("Time (s)")
+    axs[3].legend()
+    axs[3].grid(True)
 
     plt.tight_layout()
     plt.show()
