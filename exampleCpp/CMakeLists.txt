@@ -16,12 +16,14 @@ find_package(OpenCV CONFIG REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GSTREAMER REQUIRED gstreamer-1.0)
 pkg_check_modules(GSTREAMER_BASE REQUIRED gstreamer-base-1.0)
+pkg_check_modules(GSTREAMER_APP REQUIRED gstreamer-app-1.0)
 
 
 include_directories(exampleCpp PRIVATE 
 	${OpenCV_INCLUDE_DIRS}
 	${GSTREAMER_INCLUDE_DIRS}
 	${GSTREAMER_BASE_INCLUDE_DIRS}
+	${GSTREAMER_APP_INCLUDE_DIRS}
 )
 
 link_directories(${GSTREAMER_LIBRARY_DIRS} ${GSTREAMER_BASE_LIBRARY_DIRS})
@@ -35,4 +37,9 @@ if (CMAKE_VERSION VERSION_GREATER 3.12)
 endif()
 
 # TODO: Add tests and install targets if needed.
-target_link_libraries(exampleCpp PRIVATE ${OpenCV_LIBS} ${GSTREAMER_LIBRARIES} ${GSTREAMER_BASE_LIBRARIES})
+target_link_libraries(exampleCpp PRIVATE 
+	${OpenCV_LIBS}
+	${GSTREAMER_LIBRARIES}
+	${GSTREAMER_BASE_LIBRARIES}
+	${GSTREAMER_APP_LIBRARIES}
+)
