@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import psutil
@@ -47,6 +48,13 @@ def main():
         sys.exit(1)
     command = sys.argv[1:]
     print(f"Debug: Command to run is {command}")
+
+    # If it's an executable, cd to its directory
+    if "/" in command[0]:
+        exe_dir = command[0].rsplit("/", 1)[0]
+        print(f"Debug: Changing directory to {exe_dir}")
+        os.chdir(exe_dir)
+        command[0] = command[0].rsplit("/", 1)[1]
 
     print("Debug: Spawning subprocess")
     process = subprocess.Popen(
