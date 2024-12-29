@@ -154,10 +154,16 @@ int main(int arg, char* argv[])
     std::string streamUrl = argv[1];
 
     std::thread t1(loop, streamUrl, ".", true);
-    std::thread t2(loop, streamUrl, ",", false);
+    std::thread t2(loop, streamUrl, ".", true);
+    std::thread t3(loop, streamUrl, ".", true);
+    std::thread t4(loop, streamUrl, ",", false);
+    std::thread t5(loop, streamUrl, ",", false);
 
     t1.join();
     t2.join();
+    t3.join();
+    t4.join();
+    t5.join();
 
     // Clean up
     cv::destroyAllWindows();

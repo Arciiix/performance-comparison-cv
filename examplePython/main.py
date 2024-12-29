@@ -1,6 +1,38 @@
+from math import floor
+import os
+import queue
 import threading
 from time import sleep
 import cv2
+
+
+class VideoCapture:
+    def __init__(self, name):
+        self.cap = cv2.VideoCapture(name)
+        self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 0)
+        self.q = queue.Queue()
+        t = threading.Thread(target=self._reader)
+        t.daemon = True
+        t.start()
+
+    # read frames as soon as they are available, keeping only most recent one
+    def _reader(self):
+        while True:
+            ret, frame = self.cap.read()
+            if not ret:
+                break
+            if not self.q.empty():
+                try:
+                    self.q.get_nowait()  # discard previous (unprocessed) frame
+                except queue.Empty:
+                    pass
+            self.q.put(frame)
+
+    def release(self):
+        self.cap.release()
+
+    def read(self):
+        return self.q.get()
 
 
 def loop(stream_url: str, id: str, withFaceDetection: bool):
@@ -11,16 +43,11 @@ def loop(stream_url: str, id: str, withFaceDetection: bool):
             cv2.data.haarcascades + "haarcascade_frontalface_default.xml"  # type: ignore
         )
 
-    cap = cv2.VideoCapture(stream_url)
-    cap.set(cv2.CAP_PROP_BUFFERSIZE, 0)
+    cap = VideoCapture(stream_url)
     print("Start")
 
     while True:
-        ret, frame = cap.read()
-
-        if not ret:
-            sleep(1)
-            continue
+        frame = cap.read()
 
         width, height = frame.shape[:2]
 
@@ -36,8 +63,8 @@ def loop(stream_url: str, id: str, withFaceDetection: bool):
             for x, y, w, h in faces:
                 cv2.rectangle(
                     frame,
-                    (x * width // 640, y * height // 480),
-                    ((x + w) * width // 640, (y + h) * height // 480),
+                    (floor(x * width / 640), floor(y * height / 480)),
+                    (floor((x + w) * width / 640), floor((y + h) * height / 480)),
                     (0, 255, 0),
                     2,
                 )
@@ -45,7 +72,7 @@ def loop(stream_url: str, id: str, withFaceDetection: bool):
         cv2.imshow(f"Stream {id}", frame)
 
         if cv2.waitKey(1) == 27:
-            break
+            os._exit(0)
 
         sys.stdout.write(id)
         sys.stdout.flush()
@@ -63,13 +90,18 @@ def main(args):
     stream_url = args[1]
 
     t1 = threading.Thread(target=loop, args=(stream_url, ".", True))
-    t2 = threading.Thread(target=loop, args=(stream_url, ",", False))
+    t2 = threading.Thread(target=loop, args=(stream_url, ".", True))
+    t3 = threading.Thread(target=loop, args=(stream_url, ".", True))
+    t4 = threading.Thread(target=loop, args=(stream_url, ",", False))
+    t5 = threading.Thread(target=loop, args=(stream_url, ",", False))
 
-    t1.start()
-    t2.start()
+    threads = [t1, t2, t3, t4, t5]
 
-    t1.join()
-    t2.join()
+    for t in threads:
+        t.start()
+
+    for t in threads:
+        t.join()
 
     cv2.destroyAllWindows()
     cv2.waitKey(1)
