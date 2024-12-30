@@ -138,14 +138,14 @@ def main():
     axs[1].grid(True)
 
     # Plot dot FPS
-    axs[2].plot(time_data, dot_fps_data, label="Dot FPS", color="green")
-    axs[2].set_ylabel("Dot FPS")
+    axs[2].plot(time_data, dot_fps_data, label="Face Recog FPS", color="green")
+    axs[2].set_ylabel("Face Recog FPS")
     axs[2].legend()
     axs[2].grid(True)
 
     # Plot comma FPS
-    axs[3].plot(time_data, comma_fps_data, label="Comma FPS", color="blue")
-    axs[3].set_ylabel("Comma FPS")
+    axs[3].plot(time_data, comma_fps_data, label="Raw Stream FPS", color="blue")
+    axs[3].set_ylabel("Raw Stream FPS")
     axs[3].set_xlabel("Time (s)")
     axs[3].legend()
     axs[3].grid(True)
@@ -170,15 +170,15 @@ def main():
         )
 
     # Calculate statistics for each metric
-    stats = {
-        "CPU": calculate_stats(cpu_data),
-        "Memory": calculate_stats(mem_data),
-        "Dot FPS": calculate_stats(dot_fps_data),
-        "Comma FPS": calculate_stats(comma_fps_data),
-    }
+    stats = [
+        calculate_stats(cpu_data),
+        calculate_stats(mem_data),
+        calculate_stats(dot_fps_data),
+        calculate_stats(comma_fps_data),
+    ]
 
     # Annotate statistics on plots
-    for i, (label, (min_val, max_val, avg_val, median_val)) in enumerate(stats.items()):
+    for i, (min_val, max_val, avg_val, median_val) in enumerate(stats):
         axs[i].annotate(
             f"Min: {min_val:.2f}\nMax: {max_val:.2f}\nAvg: {avg_val:.2f}\nMedian: {median_val:.2f}",
             xy=(0.01, 0.99),
