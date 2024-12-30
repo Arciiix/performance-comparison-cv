@@ -125,26 +125,67 @@ def main():
     print("Debug: Plotting results")
     fig, axs = plt.subplots(4, 1, figsize=(8, 10))
 
+    # Plot CPU usage
     axs[0].plot(time_data, cpu_data, label="CPU %")
     axs[0].set_ylabel("CPU (%)")
     axs[0].legend()
     axs[0].grid(True)
 
+    # Plot memory usage
     axs[1].plot(time_data, mem_data, label="Memory (MB)", color="orange")
     axs[1].set_ylabel("Mem (MB)")
     axs[1].legend()
     axs[1].grid(True)
 
+    # Plot dot FPS
     axs[2].plot(time_data, dot_fps_data, label="Dot FPS", color="green")
     axs[2].set_ylabel("Dot FPS")
     axs[2].legend()
     axs[2].grid(True)
 
+    # Plot comma FPS
     axs[3].plot(time_data, comma_fps_data, label="Comma FPS", color="blue")
     axs[3].set_ylabel("Comma FPS")
     axs[3].set_xlabel("Time (s)")
     axs[3].legend()
     axs[3].grid(True)
+
+    # Function to calculate statistics
+    def calculate_stats(data):
+        non_zero_data = [d for d in data if d > 0]
+        if not non_zero_data:
+            return 0, 0, 0, 0
+        non_zero_data.sort()
+        n = len(non_zero_data)
+        median = (
+            non_zero_data[n // 2]
+            if n % 2 == 1
+            else (non_zero_data[n // 2 - 1] + non_zero_data[n // 2]) / 2
+        )
+        return (
+            min(non_zero_data),
+            max(non_zero_data),
+            sum(non_zero_data) / len(non_zero_data),
+            median,
+        )
+
+    # Calculate statistics for each metric
+    stats = {
+        "CPU": calculate_stats(cpu_data),
+        "Memory": calculate_stats(mem_data),
+        "Dot FPS": calculate_stats(dot_fps_data),
+        "Comma FPS": calculate_stats(comma_fps_data),
+    }
+
+    # Annotate statistics on plots
+    for i, (label, (min_val, max_val, avg_val, median_val)) in enumerate(stats.items()):
+        axs[i].annotate(
+            f"Min: {min_val:.2f}\nMax: {max_val:.2f}\nAvg: {avg_val:.2f}\nMedian: {median_val:.2f}",
+            xy=(0.01, 0.99),
+            xycoords="axes fraction",
+            verticalalignment="top",
+            bbox=dict(boxstyle="round,pad=0.3", edgecolor="black", facecolor="white"),
+        )
 
     plt.tight_layout()
     plt.show()
