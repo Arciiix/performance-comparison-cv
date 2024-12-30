@@ -18,12 +18,12 @@ A simple comparison between different programming languages and libraries for a 
 
 > Taking the average
 
-| Performance metric | C++ (GStreamer) | C++ (FFMpeg)                                        | Python (OpenCV) |
-| ------------------ | --------------- | --------------------------------------------------- | --------------- |
-| CPU Usage          | 392% (+ 4%)     | **376%**                                            | 576% (+ 53%)    |
-| Memory Usage       | 298 MB (+ 6%)   | **282 MB**                                          | 350 MB (+ 24%)  |
-| FPS - face recog.  | **9 FPS**       | 10 FPS (but a huge delay, therefore GStreamer wins) | 6 FPS (- 33%)   |
-| FPS - raw stream   | **27 FPS**      | 22 FPS (- 18%)                                      | 21 FPS (- 22%)  |
+| Performance metric | C++ (GStreamer) | C++ (FFMpeg)                                          | Python (OpenCV)  |
+| ------------------ | --------------- | ----------------------------------------------------- | ---------------- |
+| CPU Usage          | 392% _(+ 4%)_   | **376%**                                              | 576% _(+ 53%)_   |
+| Memory Usage       | 298 MB _(+ 6%)_ | **282 MB**                                            | 350 MB _(+ 24%)_ |
+| FPS - face recog.  | **9 FPS**       | 10 FPS _(but a huge delay, therefore GStreamer wins)_ | 6 FPS _(- 33%)_  |
+| FPS - raw stream   | **27 FPS**      | 22 FPS _(- 18%)_                                      | 21 FPS _(- 22%)_ |
 
 ## Analysis
 
