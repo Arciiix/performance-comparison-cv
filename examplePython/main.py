@@ -49,7 +49,11 @@ def loop(stream_url: str, id: str, withFaceDetection: bool):
     while True:
         frame = cap.read()
 
-        width, height = frame.shape[:2]
+        if frame is None:
+            print("Error: Empty Frame")
+            continue
+
+        height, width = frame.shape[:2]
 
         if withFaceDetection:
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -72,12 +76,13 @@ def loop(stream_url: str, id: str, withFaceDetection: bool):
         cv2.imshow(f"Stream {id}", frame)
 
         if cv2.waitKey(1) == 27:
-            os._exit(0)
+            break
 
         sys.stdout.write(id)
         sys.stdout.flush()
     cap.release()
     print("End")
+    os._exit(0)
 
 
 def main(args):
@@ -90,12 +95,15 @@ def main(args):
     stream_url = args[1]
 
     t1 = threading.Thread(target=loop, args=(stream_url, ".", True))
-    t2 = threading.Thread(target=loop, args=(stream_url, ".", True))
-    t3 = threading.Thread(target=loop, args=(stream_url, ".", True))
-    t4 = threading.Thread(target=loop, args=(stream_url, ",", False))
-    t5 = threading.Thread(target=loop, args=(stream_url, ",", False))
+    t2 = threading.Thread(target=loop, args=(stream_url, ",", False))
+    t3 = threading.Thread(target=loop, args=(stream_url, "a", True))
+    t4 = threading.Thread(target=loop, args=(stream_url, "b", False))
+    t5 = threading.Thread(target=loop, args=(stream_url, "c", False))
+    t6 = threading.Thread(target=loop, args=(stream_url, "d", False))
+    t7 = threading.Thread(target=loop, args=(stream_url, "e", False))
+    t8 = threading.Thread(target=loop, args=(stream_url, "f", True))
 
-    threads = [t1, t2, t3, t4, t5]
+    threads = [t1, t2, t3, t4, t5, t6, t7, t8]
 
     for t in threads:
         t.start()
