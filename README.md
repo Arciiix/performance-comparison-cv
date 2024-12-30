@@ -11,14 +11,14 @@ A simple comparison between different programming languages and libraries for a 
 # Implementations
 
 - **C++ (GStreamer)** - using GStreamer for video capture and OpenCV for face recognition
-- **C++ (OpenCV, FFMpeg)** - using OpenCV (with FFMpeg) for video capture and for face recognition
-- **Python (OpenCV)** - using OpenCV (with FFMpeg) for video capture and face recognition
+- **C++ (FFMpeg)** - using OpenCV (with FFMpeg) for video capture and for face recognition
+- **Python (FFMpeg)** - using OpenCV (with FFMpeg) for video capture and face recognition
 
 # Results
 
 > Taking the average
 
-| Performance metric | C++ (GStreamer) | C++ (FFMpeg)                                          | Python (OpenCV)  |
+| Performance metric | C++ (GStreamer) | C++ (FFMpeg)                                          | Python (FFMpeg)  |
 | ------------------ | --------------- | ----------------------------------------------------- | ---------------- |
 | CPU Usage          | 392% _(+ 4%)_   | **376%**                                              | 576% _(+ 53%)_   |
 | Memory Usage       | 298 MB _(+ 6%)_ | **282 MB**                                            | 350 MB _(+ 24%)_ |
