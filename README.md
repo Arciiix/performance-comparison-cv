@@ -1,4 +1,18 @@
-A simple comparison between different programming languages for a basic computer vision task.
+# Computer Vision Performance Comparison
+
+A simple comparison between different programming languages and libraries for a basic computer vision task.
+
+- 8 concurrent streams processed in parallel on different threads
+- 3 of them are processed by face recognition (using default OpenCV Haar Cascades) and displayed
+- 5 of them are just displayed
+- The streams are MJPEG streams using YUV420P pixel format
+- After every frame, a system call (writing the stream id to stdout) is executed - to simulate a real-world scenario
+
+# Implementations
+
+- **C++ (GStreamer)** - using GStreamer for video capture and OpenCV for face recognition
+- **C++ (OpenCV, FFMpeg)** - using OpenCV (with FFMpeg) for video capture and for face recognition
+- **Python (OpenCV)** - using OpenCV (with FFMpeg) for video capture and face recognition
 
 # Results
 
