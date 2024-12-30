@@ -2,6 +2,27 @@ A simple comparison between different programming languages for a basic computer
 
 # Results
 
+> Taking the average
+
+| Performance metric | C++ (GStreamer) | C++ (FFMpeg)                                        | Python (OpenCV) |
+| ------------------ | --------------- | --------------------------------------------------- | --------------- |
+| CPU Usage          | 392% (+ 4%)     | **376%**                                            | 576% (+ 53%)    |
+| Memory Usage       | 298 MB (+ 6%)   | **282 MB**                                          | 350 MB (+ 24%)  |
+| FPS - face recog.  | **9 FPS**       | 10 FPS (but a huge delay, therefore GStreamer wins) | 6 FPS (- 33%)   |
+| FPS - raw stream   | **27 FPS**      | 22 FPS (- 18%)                                      | 21 FPS (- 22%)  |
+
+## Analysis
+
+- **C++ (GStreamer)** is clearly the winner here.
+- **C++ (FFMpeg)** is also a good choice, but I encountered a huge stream delay when using it.
+- **Python (OpenCV)** is the slowest, but gives very decent results.
+
+When it comes to developer experience, Python is the clear winner. It's much easier to write and debug code in Python than in C++.
+
+Overall, if I had to choose, I'd go with C++ (GStreamer) for a production environment, and Python for a quick prototype.
+
+# Results - Detailed
+
 ## Per language
 
 ### C++ (GStreamer)
