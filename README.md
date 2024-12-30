@@ -1,6 +1,47 @@
 A simple comparison between different programming languages for a basic computer vision task.
 
-There's a performance benchmark and my personal UX opinion on each language.
+# Results
+
+## Per language
+
+### C++ (GStreamer)
+
+![C++ (GStreamer)](./results/0_cpp_gstreamer.png)
+
+### C++ (FFMpeg (OpenCV Video Capture))
+
+![C++ (FFMpeg (OpenCV))](./results/0_cpp_ffmpeg.png)
+
+### Python (FFMpeg/OpenCV Video Capture)
+
+![Python (OpenCV)](./results/0_python.png)
+
+## Comparison
+
+### CPU Usage
+
+![CPU Usage](./results/1_CPU.png)
+
+- lower = better
+- 100% = 1 core (so e.g. 200% = 2 cores)
+
+### Memory Usage
+
+![Memory Usage](./results/2_RAM.png)
+
+- lower = better
+
+### FPS - face recognition
+
+![FPS - face recognition](./results/3_Face%20recognition.png)
+
+- higher = better
+
+### FPS - raw stream
+
+![FPS - raw stream](./results/4_Raw%20Stream.png)
+
+- higher = better
 
 # Steps to test
 

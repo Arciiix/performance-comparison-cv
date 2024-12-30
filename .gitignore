@@ -1,2 +1,5 @@
 # venv
 performance-measure/
+
+# For preparing the graphics - large file, not needed in the repo
+results/results.psd
